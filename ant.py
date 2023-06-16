@@ -56,7 +56,6 @@ plt.plot(best_scores_sphere)
 plt.xlabel('Iteration')
 plt.ylabel('Best Score')
 plt.title('Convergence - Sphere Function')
-plt.savefig('sphere_convergence.png')
 
 # Plotting the convergence of the Rastrigin function
 plt.figure()
@@ -64,4 +63,3 @@ plt.plot(best_scores_rastrigin)
 plt.xlabel('Iteration')
 plt.ylabel('Best Score')
 plt.title('Convergence - Rastrigin Function')
-plt.savefig('rastrigin_convergence.png')
