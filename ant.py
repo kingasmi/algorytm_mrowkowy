@@ -23,25 +23,25 @@ best_score_sphere = np.inf
 best_score_rastrigin = np.inf
 
 for it in range(n_iterations):
-    # Each ant makes a move
+    # Każda mrówka wykonuje ruch
     for i in range(n_ants):
-        # Randomly select a direction
+        # Losowo wybiera kierunek
         direction = np.random.uniform(-1, 1, 2)
         direction /= np.linalg.norm(direction) # Normalize to unit vector
 
-        # Update position
+        # Zaktualizuj pozycje
         ants[i] += step_size * direction
 
-        # Boundary check
+        # Kontrola granicy
         ants[i] = np.clip(ants[i], -10, 10)
 
-        # Update the best solution for sphere function
+        # Zaktualizuj najlepsze rozwiązanie dla funkcji celu - sfera
         score_sphere = sphere_function(ants[i][0], ants[i][1])
         if score_sphere < best_score_sphere:
             best_score_sphere = score_sphere
             best_ant_sphere = ants[i].copy()
 
-        # Update the best solution for rastrigin function
+        # Zaktualizuj najlepsze rozwiązanie dla funkcji celu - Rastrigin
         score_rastrigin = rastrigin_function(ants[i][0], ants[i][1])
         if score_rastrigin < best_score_rastrigin:
             best_score_rastrigin = score_rastrigin
@@ -50,16 +50,18 @@ for it in range(n_iterations):
     best_scores_sphere.append(best_score_sphere)
     best_scores_rastrigin.append(best_score_rastrigin)
 
-# Plotting the convergence of the Sphere function
+# Wykres zbieżności funkcji celu - sfera
 plt.figure()
 plt.plot(best_scores_sphere)
 plt.xlabel('Iteration')
 plt.ylabel('Best Score')
 plt.title('Convergence - Sphere Function')
+plt.savefig('sphere.png')
 
-# Plotting the convergence of the Rastrigin function
+# Wykres zbieżności funkcji celu - Rastrigin
 plt.figure()
 plt.plot(best_scores_rastrigin)
 plt.xlabel('Iteration')
 plt.ylabel('Best Score')
 plt.title('Convergence - Rastrigin Function')
+plt.savefig('rastrigin.png')
