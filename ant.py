@@ -1,3 +1,4 @@
+#wykresy liniowe dla dwóch funkcji celu
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -65,3 +66,5 @@ plt.xlabel('Iteration')
 plt.ylabel('Best Score')
 plt.title('Convergence - Rastrigin Function')
 plt.savefig('rastrigin.png')
+
+plt.show()

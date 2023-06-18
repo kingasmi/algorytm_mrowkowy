@@ -1,7 +1,13 @@
+#caly kod programu 
+# ant + ant6 
+# wykresy w 2d - obie funkcje 
+# wykresy liniowe - obie funkcje
+
+
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
 
-# Definicja funkcji celu
 def sphere_function(x, y):
     """Funkcja celu - sfera"""
     return x**2 + y**2
@@ -10,125 +16,110 @@ def rastrigin_function(x, y):
     """Funkcja celu - Rastrigin"""
     return 20 + x**2 - 10 * np.cos(2 * np.pi * x) + y**2 - 10 * np.cos(2 * np.pi * y)
 
-# Implementacja algorytmu mrówkowego
-def ant_colony_optimization(objective_function, num_ants, num_iterations, bounds):
-    # Inicjalizacja parametrów
-    alpha = 1.0  # Wpływ feromonów
-    beta = 1.0  # Wpływ heurystyki
-    rho = 0.5   # Współczynnik parowania feromonów
-    Q = 100     # Ilość feromonów pozostawianych przez mrówkę
-    num_dimensions = 2  # Liczba wymiarów (x, y)
+n_ants = 100
+n_iterations = 100
+step_size = 0.1
 
-    # Inicjalizacja feromonów na krawędziach
-    tau = np.ones((num_dimensions, num_dimensions))
+ants = np.random.uniform(-10, 10, (n_ants, 2))
+best_ant_sphere = None
+best_score_sphere = np.inf
+best_ant_rastrigin = None
+best_score_rastrigin = np.inf
 
-    # Inicjalizacja najlepszego rozwiązania
-    best_solution = None
-    best_fitness = float('inf')
+# Wykres 2D dla funkcji celu - sfera
+fig1, ax1 = plt.subplots(figsize=(6, 6))
+x = np.linspace(-10, 10, 100)
+y = np.linspace(-10, 10, 100)
+X, Y = np.meshgrid(x, y)
+Z_sphere = sphere_function(X, Y)
+ax1.contourf(X, Y, Z_sphere, levels=50, cmap='viridis')
+sc1 = ax1.scatter(ants[:, 0], ants[:, 1])
+best_sc1 = ax1.scatter([], [], color='red')
+ax1.set_xlim(-10, 10)
+ax1.set_ylim(-10, 10)
+ax1.set_title('Funkcja celu - sfera')
 
-    # Inicjalizacja tablicy przechowującej wartości funkcji fitness w kolejnych iteracjach
-    fitness_history = []
+# Wykres 2D dla funkcji celu - Rastrigin
+fig2, ax2 = plt.subplots(figsize=(6, 6))
+Z_rastrigin = rastrigin_function(X, Y)
+ax2.contourf(X, Y, Z_rastrigin, levels=50, cmap='viridis')
+sc2 = ax2.scatter(ants[:, 0], ants[:, 1])
+best_sc2 = ax2.scatter([], [], color='red')
+ax2.set_xlim(-10, 10)
+ax2.set_ylim(-10, 10)
+ax2.set_title('Funkcja celu - Rastrigin')
 
-    # Inicjalizacja tablicy przechowującej średnie wartości funkcji celu dla każdej cząsteczki
-    mean_fitness_per_particle = np.zeros((num_iterations, num_ants))
+def update(frame):
+    global ants, best_ant_sphere, best_score_sphere, best_ant_rastrigin, best_score_rastrigin
+    direction = np.random.uniform(-1, 1, (n_ants, 2))
+    direction /= np.linalg.norm(direction, axis=1, keepdims=True)
+    ants += step_size * direction
+    ants = np.clip(ants, -10, 10)
+    scores_sphere = sphere_function(ants[:, 0], ants[:, 1])
+    scores_rastrigin = rastrigin_function(ants[:, 0], ants[:, 1])
+    best_ant_sphere = ants[np.argmin(scores_sphere)]
+    best_score_sphere = np.min(scores_sphere)
+    best_ant_rastrigin = ants[np.argmin(scores_rastrigin)]
+    best_score_rastrigin = np.min(scores_rastrigin)
+    sc1.set_offsets(ants)
+    sc2.set_offsets(ants)
+    best_sc1.set_offsets(best_ant_sphere)
+    best_sc2.set_offsets(best_ant_rastrigin)
+    ax1.set_title(f'Funkcja celu - sfera\nIteracja: {frame+1}\nNajlepszy wynik: {best_score_sphere:.2f}')
+    ax2.set_title(f'Funkcja celu - Rastrigin\nIteracja: {frame+1}\nNajlepszy wynik: {best_score_rastrigin:.2f}')
 
-    # Główna pętla algorytmu
-    for iteration in range(num_iterations):
-        solutions = np.zeros((num_ants, num_dimensions))
-        fitness_values = np.zeros(num_ants)
-        
-        # Inicjalizacja tablicy feromonowej
-        delta_tau = np.zeros((num_dimensions, num_dimensions))
+ani1 = FuncAnimation(fig1, update, frames=n_iterations, interval=200, repeat=False)
+ani2 = FuncAnimation(fig2, update, frames=n_iterations, interval=200, repeat=False)
 
-        # Poruszanie się mrówek i obliczanie wartości funkcji fitness
-        for ant in range(num_ants):
-            current_solution = solutions[ant]
-            for i in range(num_dimensions):
-                # Obliczanie atrakcyjności przejść
-                attractiveness = (tau[i] ** alpha) * (1.0 / (objective_function(*current_solution) + 1e-10)) ** beta
-                probabilities = attractiveness / np.sum(attractiveness)
+ani1.save('sphere_animation.gif', writer='imagemagick')
+ani2.save('rastrigin_animation.gif', writer='imagemagick')
 
-                # Wybór kolejnego wierzchołka
-                next_vertex = np.random.choice(range(num_dimensions), p=probabilities)
-                current_solution[i] = bounds[next_vertex, 0] + (bounds[next_vertex, 1] - bounds[next_vertex, 0]) * np.random.rand()
+# Wykres zbieżności funkcji celu - sfera
+best_scores_sphere = []
+best_scores_rastrigin = []
 
-            solutions[ant] = current_solution
-            fitness_values[ant] = objective_function(*current_solution)
+for it in range(n_iterations):
+    # Każda mrówka wykonuje ruch
+    for i in range(n_ants):
+        # Losowo wybiera kierunek
+        direction = np.random.uniform(-1, 1, 2)
+        direction /= np.linalg.norm(direction) # Normalize to unit vector
 
-            # Aktualizacja najlepszego rozwiązania
-            if fitness_values[ant] < best_fitness:
-                best_solution = current_solution
-                best_fitness = fitness_values[ant]
+        # Zaktualizuj pozycje
+        ants[i] += step_size * direction
 
-            # Aktualizacja feromonów
-            for ant in range(num_ants):
-                for i in range(num_dimensions - 1):
-                    delta_tau[int(solutions[ant, i]), int(solutions[ant, i+1])] += Q / fitness_values[ant]
-                if num_dimensions == 2:
-                    # Dla 2 wymiarów dodajemy feromony tylko dla ostatniego -> pierwszego wierzchołka
-                    delta_tau[int(solutions[ant, -1]), int(solutions[ant, 0])] += Q / fitness_values[ant]
+        # Kontrola granicy
+        ants[i] = np.clip(ants[i], -10, 10)
 
-            tau = (1 - rho) * tau + delta_tau
+        # Zaktualizuj najlepsze rozwiązanie dla funkcji celu - sfera
+        score_sphere = sphere_function(ants[i][0], ants[i][1])
+        if score_sphere < best_score_sphere:
+            best_score_sphere = score_sphere
+            best_ant_sphere = ants[i].copy()
 
+        # Zaktualizuj najlepsze rozwiązanie dla funkcji celu - Rastrigin
+        score_rastrigin = rastrigin_function(ants[i][0], ants[i][1])
+        if score_rastrigin < best_score_rastrigin:
+            best_score_rastrigin = score_rastrigin
+            best_ant_rastrigin = ants[i].copy()
 
-        # Zapisanie wartości najlepszej funkcji fitness w kolejnych iteracjach
-        fitness_history.append(best_fitness)
+    best_scores_sphere.append(best_score_sphere)
+    best_scores_rastrigin.append(best_score_rastrigin)
 
-        # Obliczanie średniej wartości funkcji celu dla każdej cząsteczki
-        mean_fitness_per_particle[iteration] = np.mean(fitness_values)
-
-    return best_solution, best_fitness, fitness_history, mean_fitness_per_particle
-
-# Parametry algorytmu
-num_ants = 10
-num_iterations = 100
-bounds = np.array([[-5.0, 5.0], [-5.0, 5.0]])  # Zakres dla x i y
-
-# Wywołanie algorytmu dla funkcji celu - sfera
-fitness_history_sphere, mean_fitness_per_particle_sphere = ant_colony_optimization(sphere_function, num_ants, num_iterations, bounds)
-
-# Wywołanie algorytmu dla funkcji celu - Rastrigin
-fitness_history_rastrigin, mean_fitness_per_particle_rastrigin = ant_colony_optimization(rastrigin_function, num_ants, num_iterations, bounds)
-
-# Wykres zmiany wartości funkcji fitness dla funkcji sferycznej
+# Wykres zbieżności funkcji celu - sfera
 plt.figure()
-x = np.arange(num_iterations)
-for ant in range(num_ants):
-    plt.plot(x, fitness_history_sphere[:, ant], label=f'Cząsteczka {ant+1}')
-plt.xlabel('Iteracje')
-plt.ylabel('Wartość funkcji fitness')
-plt.legend()
-plt.title('Zmiana wartości funkcji fitness dla funkcji sferycznej')
+plt.plot(best_scores_sphere)
+plt.xlabel('Iteracja')
+plt.ylabel('Najlepszy wynik')
+plt.title('Zbieżność - Funkcja celu - sfera')
+plt.savefig('sphere_convergence.png')
 
-# Wykres zmiany wartości funkcji fitness dla funkcji Rastrigina
+# Wykres zbieżności funkcji celu - Rastrigin
 plt.figure()
-x = np.arange(num_iterations)
-for ant in range(num_ants):
-    plt.plot(x, fitness_history_rastrigin[:, ant], label=f'Cząsteczka {ant+1}')
-plt.xlabel('Iteracje')
-plt.ylabel('Wartość funkcji fitness')
-plt.legend()
-plt.title('Zmiana wartości funkcji fitness dla funkcji Rastrigina')
+plt.plot(best_scores_rastrigin)
+plt.xlabel('Iteracja')
+plt.ylabel('Najlepszy wynik')
+plt.title('Zbieżność - Funkcja celu - Rastrigin')
+plt.savefig('rastrigin_convergence.png')
 
-# Wykres średniej wartości funkcji celu dla każdej cząsteczki dla funkcji sferycznej
-plt.figure()
-x = np.arange(num_iterations)
-for ant in range(num_ants):
-    plt.plot(x, mean_fitness_per_particle_sphere[:, ant], label=f'Cząsteczka {ant+1}')
-plt.xlabel('Iteracje')
-plt.ylabel('Średnia wartość funkcji celu')
-plt.legend()
-plt.title('Średnia wartość funkcji celu dla każdej cząsteczki - funkcja sferyczna')
-
-# Wykres średniej wartości funkcji celu dla każdej cząsteczki dla funkcji Rastrigina
-plt.figure()
-x = np.arange(num_iterations)
-for ant in range(num_ants):
-    plt.plot(x, mean_fitness_per_particle_rastrigin[:, ant], label=f'Cząsteczka {ant+1}')
-plt.xlabel('Iteracje')
-plt.ylabel('Średnia wartość funkcji celu')
-plt.legend()
-plt.title('Średnia wartość funkcji celu dla każdej cząsteczki - funkcja Rastrigina')
-
-# Wyświetlenie wszystkich wykresów
 plt.show()

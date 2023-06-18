@@ -1,3 +1,4 @@
+#wykresy 3D dla dwóch funkcji celu bez danych
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -27,6 +28,12 @@ ax_sphere.set_ylabel('Y')
 ax_sphere.set_zlabel('Z')
 ax_sphere.set_title('Funkcja sfera')
 plt.savefig('Funkcja_sfera.png')
+
+# Utworzenie siatki punktów
+x = np.linspace(-5.12, 5.12, 100)
+y = np.linspace(-5.12, 5.12, 100)
+X, Y = np.meshgrid(x, y)
+Z_rastrigin = rastrigin_function(X, Y)
 
 # Wyświetlanie wykresu dla funkcji Rastrigina
 fig_rastrigin = plt.figure()
